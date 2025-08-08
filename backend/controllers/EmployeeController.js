@@ -3,6 +3,13 @@ const Employee = require('../models/Employee');
 // Get all employees
 const getEmployees = async (req, res) => {
   try {
+    // Check if user has a storeId
+    if (!req.user.storeId) {
+      return res.status(400).json({ 
+        message: 'No store associated with this account. Please create a store first.' 
+      });
+    }
+    
     const employees = await Employee.find({ storeId: req.user.storeId }).sort({ name: 1 });
     res.json(employees);
   } catch (err) {
@@ -13,6 +20,13 @@ const getEmployees = async (req, res) => {
 // Get employee by ID
 const getEmployeeById = async (req, res) => {
   try {
+    // Check if user has a storeId
+    if (!req.user.storeId) {
+      return res.status(400).json({ 
+        message: 'No store associated with this account. Please create a store first.' 
+      });
+    }
+    
     const employee = await Employee.findOne({ 
       _id: req.params.id, 
       storeId: req.user.storeId 
@@ -31,6 +45,13 @@ const createEmployee = async (req, res) => {
   const { name, email, phone, role, salary, address, emergencyContact } = req.body;
   
   try {
+    // Check if user has a storeId
+    if (!req.user.storeId) {
+      return res.status(400).json({ 
+        message: 'No store associated with this account. Please create a store first.' 
+      });
+    }
+    
     const newEmployee = new Employee({
       name,
       email,
@@ -53,6 +74,13 @@ const createEmployee = async (req, res) => {
 const updateEmployee = async (req, res) => {
   const { id } = req.params;
   try {
+    // Check if user has a storeId
+    if (!req.user.storeId) {
+      return res.status(400).json({ 
+        message: 'No store associated with this account. Please create a store first.' 
+      });
+    }
+    
     const employee = await Employee.findOne({ 
       _id: id, 
       storeId: req.user.storeId 
@@ -72,6 +100,13 @@ const updateEmployee = async (req, res) => {
 const deleteEmployee = async (req, res) => {
   const { id } = req.params;
   try {
+    // Check if user has a storeId
+    if (!req.user.storeId) {
+      return res.status(400).json({ 
+        message: 'No store associated with this account. Please create a store first.' 
+      });
+    }
+    
     const employee = await Employee.findOneAndDelete({ 
       _id: id, 
       storeId: req.user.storeId 
@@ -88,6 +123,13 @@ const deleteEmployee = async (req, res) => {
 // Get employees by role
 const getEmployeesByRole = async (req, res) => {
   try {
+    // Check if user has a storeId
+    if (!req.user.storeId) {
+      return res.status(400).json({ 
+        message: 'No store associated with this account. Please create a store first.' 
+      });
+    }
+    
     const { role } = req.params;
     const employees = await Employee.find({ 
       role, 

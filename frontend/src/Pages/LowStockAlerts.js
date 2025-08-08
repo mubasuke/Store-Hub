@@ -48,7 +48,12 @@ const LowStockAlerts = () => {
       setLowStockProducts(response.data);
       setLoading(false);
     } catch (err) {
-      setError('Failed to load low stock products');
+      // Check if the error is due to no store being associated
+      if (err.response?.data?.message?.includes('No store associated')) {
+        setError('You need to create a store first to view low stock alerts.');
+      } else {
+        setError('Failed to load low stock products');
+      }
       setLoading(false);
     }
   };
@@ -67,7 +72,12 @@ const LowStockAlerts = () => {
       setOpenDialog(false);
       fetchLowStockProducts();
     } catch (err) {
-      setError('Failed to update product stock');
+      // Check if the error is due to no store being associated
+      if (err.response?.data?.message?.includes('No store associated')) {
+        setError('You need to create a store first to manage products.');
+      } else {
+        setError('Failed to update product stock');
+      }
     }
   };
 

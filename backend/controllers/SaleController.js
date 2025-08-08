@@ -5,6 +5,13 @@ const Employee = require('../models/Employee');
 // Get all sales
 const getSales = async (req, res) => {
   try {
+    // Check if user has a storeId
+    if (!req.user.storeId) {
+      return res.status(400).json({ 
+        message: 'No store associated with this account. Please create a store first.' 
+      });
+    }
+    
     const sales = await Sale.find({ storeId: req.user.storeId })
       .populate('items.product', 'name price')
       .populate('employeeId', 'name role')
@@ -20,6 +27,13 @@ const createSale = async (req, res) => {
   const { items, employeeId, customerName, discount, tax, paymentMethod } = req.body;
   
   try {
+    // Check if user has a storeId
+    if (!req.user.storeId) {
+      return res.status(400).json({ 
+        message: 'No store associated with this account. Please create a store first.' 
+      });
+    }
+    
     // Validate employee exists and belongs to this store
     const employee = await Employee.findOne({ 
       _id: employeeId, 
@@ -103,6 +117,13 @@ const createSale = async (req, res) => {
 // Get sale by ID
 const getSaleById = async (req, res) => {
   try {
+    // Check if user has a storeId
+    if (!req.user.storeId) {
+      return res.status(400).json({ 
+        message: 'No store associated with this account. Please create a store first.' 
+      });
+    }
+    
     const sale = await Sale.findOne({ 
       _id: req.params.id, 
       storeId: req.user.storeId 
@@ -123,6 +144,13 @@ const getSaleById = async (req, res) => {
 // Get low stock products
 const getLowStockProducts = async (req, res) => {
   try {
+    // Check if user has a storeId
+    if (!req.user.storeId) {
+      return res.status(400).json({ 
+        message: 'No store associated with this account. Please create a store first.' 
+      });
+    }
+    
     const lowStockProducts = await Product.find({ 
       isLowStock: true, 
       storeId: req.user.storeId 
@@ -136,6 +164,13 @@ const getLowStockProducts = async (req, res) => {
 // Delete a sale and restore product quantities
 const deleteSale = async (req, res) => {
   try {
+    // Check if user has a storeId
+    if (!req.user.storeId) {
+      return res.status(400).json({ 
+        message: 'No store associated with this account. Please create a store first.' 
+      });
+    }
+    
     const sale = await Sale.findOne({ 
       _id: req.params.id, 
       storeId: req.user.storeId 

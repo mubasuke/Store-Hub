@@ -10,7 +10,8 @@ import {
   Alert,
   CircularProgress,
   Paper,
-  Divider
+  Divider,
+  Button
 } from '@mui/material';
 import {
   Inventory,
@@ -20,7 +21,8 @@ import {
   TrendingUp,
   AttachMoney,
   Store,
-  Notifications
+  Notifications,
+  Storefront
 } from '@mui/icons-material';
 import axios from 'axios';
 
@@ -34,6 +36,7 @@ const Dashboard = () => {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [hasStore, setHasStore] = useState(true);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -53,7 +56,13 @@ const Dashboard = () => {
         });
         setLoading(false);
       } catch (err) {
-        setError('Failed to load dashboard data');
+        // Check if the error is due to no store being associated
+        if (err.response?.data?.message?.includes('No store associated')) {
+          setHasStore(false);
+          setError('You need to create a store first to access the dashboard.');
+        } else {
+          setError('Failed to load dashboard data');
+        }
         setLoading(false);
       }
     };
@@ -66,6 +75,55 @@ const Dashboard = () => {
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
         <CircularProgress />
       </Box>
+    );
+  }
+
+  if (!hasStore) {
+    return (
+      <Container maxWidth="lg" sx={{ mt: 4 }}>
+        <Paper 
+          sx={{ 
+            p: 4, 
+            textAlign: 'center',
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            color: 'white',
+            borderRadius: 3
+          }}
+        >
+          <Storefront sx={{ fontSize: 80, mb: 2, opacity: 0.8 }} />
+          <Typography variant="h4" sx={{ mb: 2, fontWeight: 700 }}>
+            Welcome to Store Management!
+          </Typography>
+          <Typography variant="h6" sx={{ mb: 3, opacity: 0.9 }}>
+            You need to create your store first to start managing your business.
+          </Typography>
+          <Typography variant="body1" sx={{ mb: 4, opacity: 0.8 }}>
+            Once you create your store, you'll get a unique Store ID that you can share with your employees 
+            so they can register and join your store management system.
+          </Typography>
+          <Button
+            variant="contained"
+            size="large"
+            startIcon={<Storefront />}
+            onClick={() => navigate('/create-store')}
+            sx={{
+              background: 'rgba(255,255,255,0.2)',
+              color: 'white',
+              border: '2px solid rgba(255,255,255,0.3)',
+              px: 4,
+              py: 1.5,
+              fontSize: '1.1rem',
+              fontWeight: 600,
+              '&:hover': {
+                background: 'rgba(255,255,255,0.3)',
+                border: '2px solid rgba(255,255,255,0.5)'
+              }
+            }}
+          >
+            Create Your Store
+          </Button>
+        </Paper>
+      </Container>
     );
   }
 

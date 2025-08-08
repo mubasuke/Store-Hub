@@ -10,6 +10,8 @@ import Employees from './Pages/Employees';
 import LowStockAlerts from './Pages/LowStockAlerts';
 import Login from './Pages/Login';
 import Register from './Pages/Register';
+import CreateStore from './Pages/CreateStore';
+import StoreInfo from './Pages/StoreInfo';
 import ProtectedRoute from './Components/ProtectedRoute';
 import axios from 'axios';
 import './App.css';
@@ -129,7 +131,7 @@ function App() {
             <Route 
               path="/products" 
               element={
-                <ProtectedRoute allowedRoles={['store_owner']}>
+                <ProtectedRoute allowedRoles={['store_owner', 'employee']}>
                   <Products />
                 </ProtectedRoute>
               } 
@@ -155,6 +157,22 @@ function App() {
               element={
                 <ProtectedRoute allowedRoles={['store_owner', 'employee']}>
                   <LowStockAlerts />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/create-store" 
+              element={
+                <ProtectedRoute allowedRoles={['store_owner']}>
+                  <CreateStore onLogin={handleLogin} />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/store-info" 
+              element={
+                <ProtectedRoute allowedRoles={['store_owner', 'employee']}>
+                  <StoreInfo />
                 </ProtectedRoute>
               } 
             />

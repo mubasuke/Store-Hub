@@ -71,6 +71,7 @@ const Register = ({ onLogin }) => {
   };
 
   const handleStoreChange = (e) => {
+    console.log('Store form field changed:', e.target.name, e.target.value);
     setStoreFormData({
       ...storeFormData,
       [e.target.name]: e.target.value
@@ -167,12 +168,49 @@ const Register = ({ onLogin }) => {
   };
 
   const handleCreateStore = async () => {
+    console.log('Create Store button clicked');
+    console.log('Store form data:', storeFormData);
+    console.log('Token:', localStorage.getItem('token'));
+    
+    // Validate required fields
+    if (!storeFormData.name.trim()) {
+      setError('Store name is required');
+      return;
+    }
+    
+    if (!storeFormData.address.trim()) {
+      setError('Store address is required');
+      return;
+    }
+    
+    if (!storeFormData.phone.trim()) {
+      setError('Store phone is required');
+      return;
+    }
+    
+    if (!storeFormData.email.trim()) {
+      setError('Store email is required');
+      return;
+    }
+    
     try {
+      console.log('Sending request to create store...');
       const response = await axios.post('http://localhost:5000/api/stores', storeFormData, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
+      
+      console.log('Store creation response:', response.data);
+      
+      // Update the token with the new one that includes storeId
+      if (response.data.token) {
+        localStorage.setItem('token', response.data.token);
+        // Update the user context with new token and user data
+        if (response.data.user) {
+          onLogin(response.data.user, response.data.token);
+        }
+      }
       
       setGeneratedStoreId(response.data.store.storeId);
       setShowStoreDialog(false);
@@ -181,6 +219,7 @@ const Register = ({ onLogin }) => {
         navigate('/');
       }, 3000);
     } catch (err) {
+      console.error('Store creation error:', err);
       setError(err.response?.data?.message || 'Failed to create store');
     }
   };
@@ -535,7 +574,10 @@ const Register = ({ onLogin }) => {
             Cancel
           </Button>
           <Button 
-            onClick={handleCreateStore} 
+            onClick={() => {
+              console.log('Create Store button clicked from dialog');
+              handleCreateStore();
+            }} 
             variant="contained"
             startIcon={<Storefront />}
           >

@@ -1,5 +1,6 @@
 const Store = require('../models/Store');
 const User = require('../models/User');
+const jwt = require('jsonwebtoken');
 
 // Generate unique store ID
 const generateStoreId = () => {
@@ -26,9 +27,30 @@ const createStore = async (req, res) => {
     
     await newStore.save();
     
+    // Update the user's storeId
+    await User.findByIdAndUpdate(req.user.userId, {
+      storeId: newStore._id
+    });
+    
+    // Generate new JWT token with storeId
+    const updatedToken = jwt.sign(
+      { 
+        userId: req.user.userId, 
+        role: req.user.role, 
+        storeId: newStore._id 
+      },
+      process.env.JWT_SECRET || 'your-secret-key',
+      { expiresIn: '24h' }
+    );
+    
+    // Get updated user data
+    const updatedUser = await User.findById(req.user.userId).populate('storeId');
+    
     res.status(201).json({
       message: 'Store created successfully',
-      store: newStore
+      store: newStore,
+      token: updatedToken,
+      user: updatedUser.toJSON()
     });
   } catch (err) {
     res.status(400).json({ message: err.message });
@@ -81,6 +103,31 @@ const getStoreByUserId = async (req, res) => {
   }
 };
 
+// Get user's store (works for both store owners and employees)
+const getMyStore = async (req, res) => {
+  try {
+    // Check if user has a storeId
+    if (!req.user.storeId) {
+      return res.status(400).json({ 
+        message: 'No store associated with this account. Please create a store first.' 
+      });
+    }
+    
+    const store = await Store.findOne({ 
+      _id: req.user.storeId,
+      isActive: true 
+    });
+    
+    if (!store) {
+      return res.status(404).json({ message: 'Store not found' });
+    }
+    
+    res.json({ store });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
 // Update store
 const updateStore = async (req, res) => {
   try {
@@ -116,5 +163,6 @@ module.exports = {
   createStore,
   getStoreByStoreId,
   getStoreByUserId,
+  getMyStore,
   updateStore
 }; 

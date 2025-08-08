@@ -69,7 +69,12 @@ const Employees = () => {
       setEmployees(response.data);
       setLoading(false);
     } catch (err) {
-      setError('Failed to load employees');
+      // Check if the error is due to no store being associated
+      if (err.response?.data?.message?.includes('No store associated')) {
+        setError('You need to create a store first to manage employees.');
+      } else {
+        setError('Failed to load employees');
+      }
       setLoading(false);
     }
   };
@@ -122,7 +127,12 @@ const Employees = () => {
       fetchEmployees();
       handleCloseDialog();
     } catch (err) {
-      setError('Failed to save employee');
+      // Check if the error is due to no store being associated
+      if (err.response?.data?.message?.includes('No store associated')) {
+        setError('You need to create a store first to manage employees.');
+      } else {
+        setError('Failed to save employee');
+      }
     }
   };
 
@@ -132,7 +142,12 @@ const Employees = () => {
         await axios.delete(`http://localhost:5000/api/employees/${id}`);
         fetchEmployees();
       } catch (err) {
-        setError('Failed to delete employee');
+        // Check if the error is due to no store being associated
+        if (err.response?.data?.message?.includes('No store associated')) {
+          setError('You need to create a store first to manage employees.');
+        } else {
+          setError('Failed to delete employee');
+        }
       }
     }
   };

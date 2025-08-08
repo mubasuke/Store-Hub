@@ -24,7 +24,8 @@ import {
   Notifications,
   Logout,
   AccountCircle,
-  Person
+  Person,
+  Storefront
 } from '@mui/icons-material';
 import axios from 'axios';
 import './Navbar.css';
@@ -68,25 +69,26 @@ const Navbar = ({ user, onLogout }) => {
   const getNavItems = () => {
     const baseItems = [
       { path: '/sales', label: 'Sales', icon: <ShoppingCart /> },
+      { path: '/products', label: 'Products', icon: <Inventory /> },
       { 
         path: '/alerts', 
         label: 'Alerts', 
         icon: <Warning />,
         badge: lowStockCount > 0 ? lowStockCount : null
-      }
+      },
+      { path: '/store-info', label: 'Store Info', icon: <Storefront /> }
     ];
 
     // Add store owner specific items
     if (user?.role === 'store_owner') {
       return [
         { path: '/', label: 'Dashboard', icon: <Dashboard /> },
-        { path: '/products', label: 'Products', icon: <Inventory /> },
         ...baseItems,
         { path: '/employees', label: 'Employees', icon: <People /> }
       ];
     }
 
-    // Employee only sees sales and alerts
+    // Employee sees sales, products, alerts, and store info
     return baseItems;
   };
 

@@ -73,7 +73,12 @@ const Sales = () => {
       setEmployees(employeesRes.data);
       setLoading(false);
     } catch (err) {
-      setError('Failed to load data');
+      // Check if the error is due to no store being associated
+      if (err.response?.data?.message?.includes('No store associated')) {
+        setError('You need to create a store first to access sales data.');
+      } else {
+        setError('Failed to load data');
+      }
       setLoading(false);
     }
   };
@@ -85,7 +90,12 @@ const Sales = () => {
       fetchData();
       setError('');
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to delete sale');
+      // Check if the error is due to no store being associated
+      if (err.response?.data?.message?.includes('No store associated')) {
+        setError('You need to create a store first to manage sales.');
+      } else {
+        setError(err.response?.data?.message || 'Failed to delete sale');
+      }
     }
   };
 
@@ -155,7 +165,12 @@ const Sales = () => {
       resetForm();
       fetchData();
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to create sale');
+      // Check if the error is due to no store being associated
+      if (err.response?.data?.message?.includes('No store associated')) {
+        setError('You need to create a store first to create sales.');
+      } else {
+        setError(err.response?.data?.message || 'Failed to create sale');
+      }
     }
   };
 

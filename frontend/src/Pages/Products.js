@@ -62,7 +62,12 @@ const Products = () => {
       setProducts(response.data);
       setLoading(false);
     } catch (err) {
-      setError('Failed to load products');
+      // Check if the error is due to no store being associated
+      if (err.response?.data?.message?.includes('No store associated')) {
+        setError('You need to create a store first to manage products.');
+      } else {
+        setError('Failed to load products');
+      }
       setLoading(false);
     }
   };
@@ -115,7 +120,12 @@ const Products = () => {
       fetchProducts();
       handleCloseDialog();
     } catch (err) {
-      setError('Failed to save product');
+      // Check if the error is due to no store being associated
+      if (err.response?.data?.message?.includes('No store associated')) {
+        setError('You need to create a store first to add products.');
+      } else {
+        setError('Failed to save product');
+      }
     }
   };
 
@@ -125,7 +135,12 @@ const Products = () => {
         await axios.delete(`http://localhost:5000/api/products/${id}`);
         fetchProducts();
       } catch (err) {
-        setError('Failed to delete product');
+        // Check if the error is due to no store being associated
+        if (err.response?.data?.message?.includes('No store associated')) {
+          setError('You need to create a store first to manage products.');
+        } else {
+          setError('Failed to delete product');
+        }
       }
     }
   };

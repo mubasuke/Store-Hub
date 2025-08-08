@@ -12,7 +12,20 @@ const authenticateToken = async (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
-    req.user = decoded;
+    
+    // Get the user from database to ensure we have the latest storeId
+    const user = await User.findById(decoded.userId).populate('storeId');
+    if (!user) {
+      return res.status(401).json({ message: 'User not found' });
+    }
+
+    // Update req.user with the latest user data including storeId
+    req.user = {
+      userId: user._id,
+      role: user.role,
+      storeId: user.storeId ? user.storeId._id : null
+    };
+    
     next();
   } catch (err) {
     return res.status(403).json({ message: 'Invalid or expired token' });
