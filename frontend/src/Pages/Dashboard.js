@@ -18,9 +18,6 @@ import {
   ShoppingCart,
   People,
   Warning,
-  TrendingUp,
-  AttachMoney,
-  Store,
   Notifications,
   Storefront
 } from '@mui/icons-material';
@@ -184,40 +181,16 @@ const Dashboard = () => {
     </Card>
   );
 
-  const QuickActionCard = ({ title, description, icon, color, onClick }) => (
-    <Card 
-      sx={{ 
-        p: 2, 
-        textAlign: 'center',
-        cursor: 'pointer',
-        transition: 'all 0.2s ease-in-out',
-        '&:hover': {
-          transform: 'translateY(-2px)',
-          boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
-        }
-      }}
-      onClick={onClick}
-    >
-      <Box sx={{ color: color, mb: 1 }}>
-        {icon}
-      </Box>
-      <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
-        {title}
-      </Typography>
-      <Typography variant="body2" color="text.secondary">
-        {description}
-      </Typography>
-    </Card>
-  );
+
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4 }}>
+    <Container maxWidth="lg" sx={{ mt: 2 }}>
       <Box mb={4}>
         <Typography 
           variant="h3" 
           sx={{ 
             fontWeight: 700, 
-            color: '#1a237e',
+            color: 'primary.main',
             mb: 1
           }}
         >
@@ -294,40 +267,7 @@ const Dashboard = () => {
         </Paper>
       )}
 
-      <Paper sx={{ p: 4, borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }}>
-        <Typography variant="h5" sx={{ mb: 3, fontWeight: 600, color: '#1a237e' }}>
-          Quick Actions
-        </Typography>
-        <Grid container spacing={3}>
-          <Grid item xs={12} md={4}>
-            <QuickActionCard
-              title="Manage Products"
-              description="Add, edit, or remove products from your inventory"
-              icon={<Store sx={{ fontSize: 40 }} />}
-              color="#1a237e"
-              onClick={() => navigate('/products')}
-            />
-          </Grid>
-          <Grid item xs={12} md={4}>
-            <QuickActionCard
-              title="Process Sales"
-              description="Create new sales transactions and manage customer orders"
-              icon={<AttachMoney sx={{ fontSize: 40 }} />}
-              color="#2e7d32"
-              onClick={() => navigate('/sales')}
-            />
-          </Grid>
-          <Grid item xs={12} md={4}>
-            <QuickActionCard
-              title="View Analytics"
-              description="Monitor sales performance and inventory trends"
-              icon={<TrendingUp sx={{ fontSize: 40 }} />}
-              color="#1976d2"
-              onClick={() => navigate('/alerts')}
-            />
-          </Grid>
-        </Grid>
-      </Paper>
+
     </Container>
   );
 };

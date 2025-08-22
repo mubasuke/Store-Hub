@@ -107,7 +107,7 @@ const CreateStore = ({ onLogin }) => {
   };
 
   return (
-    <Container maxWidth="md" sx={{ mt: 4 }}>
+    <Container maxWidth="md" sx={{ mt: 2 }}>
       <Card sx={{ 
         borderRadius: 3, 
         boxShadow: '0 8px 32px rgba(0,0,0,0.1)',

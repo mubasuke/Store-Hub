@@ -27,12 +27,15 @@ import {
   Person,
   Storefront
 } from '@mui/icons-material';
+import { useTheme } from '../../contexts/ThemeContext';
+import DarkModeToggle from '../DarkModeToggle';
 import axios from 'axios';
 import './Navbar.css';
 
 const Navbar = ({ user, onLogout }) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { darkMode } = useTheme();
   const [lowStockCount, setLowStockCount] = useState(0);
   const [anchorEl, setAnchorEl] = useState(null);
 
@@ -179,6 +182,17 @@ const Navbar = ({ user, onLogout }) => {
         </Box>
 
         <Box display="flex" alignItems="center" gap={2}>
+          {/* Dark Mode Toggle */}
+          <DarkModeToggle 
+            sx={{ 
+              color: 'white',
+              backgroundColor: 'rgba(255, 255, 255, 0.1)',
+              '&:hover': {
+                backgroundColor: 'rgba(255, 255, 255, 0.2)',
+              }
+            }}
+          />
+
           {lowStockCount > 0 && (
             <Chip
               icon={<Notifications />}

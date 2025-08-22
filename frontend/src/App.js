@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { ThemeProvider as MuiThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import Navbar from './Components/Navbar/Navbar';
 import Dashboard from './Pages/Dashboard';
@@ -13,24 +13,67 @@ import Register from './Pages/Register';
 import CreateStore from './Pages/CreateStore';
 import StoreInfo from './Pages/StoreInfo';
 import ProtectedRoute from './Components/ProtectedRoute';
+import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import axios from 'axios';
 import './App.css';
 
-const theme = createTheme({
-  palette: {
-    primary: {
-      main: '#1976d2',
-    },
-    secondary: {
-      main: '#dc004e',
-    },
-  },
-});
-
-function App() {
+// Component that uses the theme context
+const AppContent = () => {
+  const { darkMode } = useTheme();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  // Create dynamic theme based on dark mode
+  const theme = createTheme({
+    palette: {
+      mode: darkMode ? 'dark' : 'light',
+      primary: {
+        main: darkMode ? '#90caf9' : '#1976d2',
+      },
+      secondary: {
+        main: darkMode ? '#f48fb1' : '#dc004e',
+      },
+      background: {
+        default: darkMode ? '#121212' : '#f5f5f5',
+        paper: darkMode ? '#1e1e1e' : '#ffffff',
+      },
+      text: {
+        primary: darkMode ? '#ffffff' : '#333333',
+        secondary: darkMode ? '#b0b0b0' : '#666666',
+      },
+    },
+    components: {
+      MuiAppBar: {
+        styleOverrides: {
+          root: {
+            background: darkMode 
+              ? 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)'
+              : 'linear-gradient(135deg, #1a237e 0%, #3949ab 100%)',
+          },
+        },
+      },
+      MuiCard: {
+        styleOverrides: {
+          root: {
+            backgroundColor: darkMode ? '#1e1e1e' : '#ffffff',
+            border: `1px solid ${darkMode ? '#404040' : '#e0e0e0'}`,
+            boxShadow: darkMode 
+              ? '0 4px 20px rgba(0, 0, 0, 0.3)'
+              : '0 4px 20px rgba(0, 0, 0, 0.1)',
+          },
+        },
+      },
+      MuiPaper: {
+        styleOverrides: {
+          root: {
+            backgroundColor: darkMode ? '#1e1e1e' : '#ffffff',
+            border: `1px solid ${darkMode ? '#404040' : '#e0e0e0'}`,
+          },
+        },
+      },
+    },
+  });
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -80,22 +123,23 @@ function App() {
 
   if (loading) {
     return (
-      <ThemeProvider theme={theme}>
+      <MuiThemeProvider theme={theme}>
         <CssBaseline />
         <div style={{ 
           display: 'flex', 
           justifyContent: 'center', 
           alignItems: 'center', 
-          height: '100vh' 
+          height: '100vh',
+          backgroundColor: theme.palette.background.default
         }}>
           <CssBaseline />
         </div>
-      </ThemeProvider>
+      </MuiThemeProvider>
     );
   }
 
   return (
-    <ThemeProvider theme={theme}>
+    <MuiThemeProvider theme={theme}>
       <CssBaseline />
       <Router>
         <div className="App">
@@ -182,6 +226,14 @@ function App() {
           </Routes>
         </div>
       </Router>
+    </MuiThemeProvider>
+  );
+};
+
+function App() {
+  return (
+    <ThemeProvider>
+      <AppContent />
     </ThemeProvider>
   );
 }

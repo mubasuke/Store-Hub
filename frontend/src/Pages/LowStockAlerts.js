@@ -106,10 +106,10 @@ const LowStockAlerts = () => {
   const infoItems = lowStockProducts.filter(p => p.quantity > p.lowStockThreshold / 2);
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4 }}>
+    <Container maxWidth="lg" sx={{ mt: 2 }}>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
         <Box>
-          <Typography variant="h4" sx={{ fontWeight: 600, color: '#1a237e' }}>
+          <Typography variant="h4" sx={{ fontWeight: 600, color: 'primary.main' }}>
             Low Stock Alerts
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>

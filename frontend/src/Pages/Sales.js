@@ -194,10 +194,10 @@ const Sales = () => {
   }
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4 }}>
+    <Container maxWidth="lg" sx={{ mt: 2 }}>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
         <Box>
-          <Typography variant="h4" sx={{ fontWeight: 600, color: '#1a237e' }}>
+          <Typography variant="h4" sx={{ fontWeight: 600, color: 'primary.main' }}>
             Sales Management
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
@@ -231,7 +231,7 @@ const Sales = () => {
           <TableContainer>
             <Table>
               <TableHead>
-                <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
+                <TableRow sx={{ backgroundColor: 'background.default' }}>
                   <TableCell sx={{ fontWeight: 600 }}>Date</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Customer</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Employee</TableCell>
@@ -243,7 +243,7 @@ const Sales = () => {
               </TableHead>
               <TableBody>
                 {sales.map((sale) => (
-                  <TableRow key={sale._id} sx={{ '&:hover': { backgroundColor: '#fafafa' } }}>
+                  <TableRow key={sale._id} sx={{ '&:hover': { backgroundColor: 'action.hover' } }}>
                     <TableCell>
                       <Box>
                         <Typography variant="body2" sx={{ fontWeight: 500 }}>
@@ -280,7 +280,9 @@ const Sales = () => {
                             key={index}
                             label={`${item.product?.name} x${item.quantity}`}
                             size="small"
-                            sx={{ mr: 0.5, mb: 0.5, backgroundColor: '#e3f2fd' }}
+                            color="primary"
+                            variant="outlined"
+                            sx={{ mr: 0.5, mb: 0.5 }}
                           />
                         ))}
                       </Box>

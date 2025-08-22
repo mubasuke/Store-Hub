@@ -157,10 +157,10 @@ const Products = () => {
   const inStockProducts = products.filter(p => !p.isLowStock);
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4 }}>
+    <Container maxWidth="lg" sx={{ mt: 2 }}>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
         <Box>
-          <Typography variant="h4" sx={{ fontWeight: 600, color: '#1a237e' }}>
+          <Typography variant="h4" sx={{ fontWeight: 600, color: 'primary.main' }}>
             Products Management
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
@@ -261,7 +261,7 @@ const Products = () => {
           <TableContainer>
             <Table>
               <TableHead>
-                <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
+                <TableRow sx={{ backgroundColor: 'background.default' }}>
                   <TableCell sx={{ fontWeight: 600 }}>Name</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Description</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Price</TableCell>
@@ -273,7 +273,7 @@ const Products = () => {
               </TableHead>
               <TableBody>
                 {products.map((product) => (
-                  <TableRow key={product._id} sx={{ '&:hover': { backgroundColor: '#fafafa' } }}>
+                  <TableRow key={product._id} sx={{ '&:hover': { backgroundColor: 'action.hover' } }}>
                     <TableCell>
                       <Typography variant="body2" sx={{ fontWeight: 500 }}>
                         {product.name}

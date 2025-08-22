@@ -183,10 +183,10 @@ const Employees = () => {
   const totalSalary = employees.reduce((sum, emp) => sum + emp.salary, 0);
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4 }}>
+    <Container maxWidth="lg" sx={{ mt: 2 }}>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
         <Box>
-          <Typography variant="h4" sx={{ fontWeight: 600, color: '#1a237e' }}>
+          <Typography variant="h4" sx={{ fontWeight: 600, color: 'primary.main' }}>
             Employee Management
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
@@ -287,7 +287,7 @@ const Employees = () => {
           <TableContainer>
             <Table>
               <TableHead>
-                <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
+                <TableRow sx={{ backgroundColor: 'background.default' }}>
                   <TableCell sx={{ fontWeight: 600 }}>Employee</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Contact</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Role</TableCell>
@@ -299,7 +299,7 @@ const Employees = () => {
               </TableHead>
               <TableBody>
                 {employees.map((employee) => (
-                  <TableRow key={employee._id} sx={{ '&:hover': { backgroundColor: '#fafafa' } }}>
+                  <TableRow key={employee._id} sx={{ '&:hover': { backgroundColor: 'action.hover' } }}>
                     <TableCell>
                       <Box display="flex" alignItems="center">
                         <Avatar 

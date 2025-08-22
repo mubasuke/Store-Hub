@@ -12,7 +12,8 @@ import {
   Chip,
   Button,
   Paper,
-  Divider
+  Divider,
+  TextField
 } from '@mui/material';
 import {
   Storefront,
@@ -22,7 +23,9 @@ import {
   Phone,
   Email,
   Business,
-  QrCode
+  QrCode,
+  Save,
+  Cancel
 } from '@mui/icons-material';
 import axios from 'axios';
 
@@ -31,10 +34,26 @@ const StoreInfo = () => {
   const [store, setStore] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [user, setUser] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+    address: '',
+    phone: '',
+    email: ''
+  });
 
   useEffect(() => {
-    const fetchStoreInfo = async () => {
+    const fetchData = async () => {
       try {
+        // Get user data from localStorage
+        const userData = localStorage.getItem('user');
+        if (userData) {
+          setUser(JSON.parse(userData));
+        }
+
         const response = await axios.get('http://localhost:5000/api/stores/my-store');
         setStore(response.data.store);
         setLoading(false);
@@ -49,11 +68,77 @@ const StoreInfo = () => {
       }
     };
 
-    fetchStoreInfo();
+    fetchData();
   }, []);
 
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text);
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleEdit = () => {
+    setFormData({
+      name: store.name || '',
+      description: store.description || '',
+      address: store.address || '',
+      phone: store.phone || '',
+      email: store.email || ''
+    });
+    setIsEditing(true);
+  };
+
+  const handleCancel = () => {
+    setIsEditing(false);
+    setError('');
+  };
+
+  const handleSave = async () => {
+    // Validate required fields
+    if (!formData.name.trim()) {
+      setError('Store name is required');
+      return;
+    }
+    
+    if (!formData.address.trim()) {
+      setError('Store address is required');
+      return;
+    }
+    
+    if (!formData.phone.trim()) {
+      setError('Store phone is required');
+      return;
+    }
+    
+    if (!formData.email.trim()) {
+      setError('Store email is required');
+      return;
+    }
+    
+    setSaving(true);
+    setError('');
+    
+    try {
+      await axios.put('http://localhost:5000/api/stores', formData);
+      // Update local store data
+      setStore(prev => ({
+        ...prev,
+        ...formData
+      }));
+      setIsEditing(false);
+      alert('Store information updated successfully!');
+    } catch (err) {
+      console.error('Store update error:', err);
+      setError(err.response?.data?.message || 'Failed to update store information');
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (loading) {
@@ -81,13 +166,13 @@ const StoreInfo = () => {
   }
 
   return (
-    <Container maxWidth="md" sx={{ mt: 4 }}>
+    <Container maxWidth="md" sx={{ mt: 2 }}>
       <Box mb={4}>
         <Typography 
           variant="h3" 
           sx={{ 
             fontWeight: 700, 
-            color: '#1a237e',
+            color: 'primary.main',
             mb: 1
           }}
         >
@@ -110,33 +195,108 @@ const StoreInfo = () => {
             boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
             overflow: 'hidden'
           }}>
-            <Box sx={{ 
-              background: 'linear-gradient(135deg, #1a237e 0%, #3949ab 100%)',
-              p: 4,
-              textAlign: 'center',
-              color: 'white'
-            }}>
-              <Storefront sx={{ fontSize: 48, mb: 2 }} />
-              <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
-                {store.name}
-              </Typography>
-              <Typography variant="body1" sx={{ opacity: 0.9 }}>
-                {store.description || 'No description available'}
-              </Typography>
-            </Box>
+                         <Box sx={{ 
+               background: 'linear-gradient(135deg, #1a237e 0%, #3949ab 100%)',
+               p: 4,
+               textAlign: 'center',
+               color: 'white'
+             }}>
+               <Storefront sx={{ fontSize: 48, mb: 2 }} />
+               {isEditing ? (
+                 <Box sx={{ mb: 2 }}>
+                   <TextField
+                     fullWidth
+                     name="name"
+                     value={formData.name}
+                     onChange={handleInputChange}
+                     required
+                     placeholder="Store name"
+                     sx={{
+                       '& .MuiOutlinedInput-root': {
+                         color: 'white',
+                         '& fieldset': {
+                           borderColor: 'rgba(255, 255, 255, 0.3)',
+                         },
+                         '&:hover fieldset': {
+                           borderColor: 'rgba(255, 255, 255, 0.5)',
+                         },
+                         '&.Mui-focused fieldset': {
+                           borderColor: 'white',
+                         },
+                       },
+                       '& .MuiInputLabel-root': {
+                         color: 'rgba(255, 255, 255, 0.7)',
+                       },
+                       '& .MuiInputBase-input': {
+                         color: 'white',
+                         fontSize: '2rem',
+                         fontWeight: 700,
+                         textAlign: 'center',
+                       },
+                     }}
+                   />
+                   <TextField
+                     fullWidth
+                     name="description"
+                     value={formData.description}
+                     onChange={handleInputChange}
+                     multiline
+                     rows={2}
+                     placeholder="Store description"
+                     sx={{
+                       mt: 1,
+                       '& .MuiOutlinedInput-root': {
+                         color: 'white',
+                         '& fieldset': {
+                           borderColor: 'rgba(255, 255, 255, 0.3)',
+                         },
+                         '&:hover fieldset': {
+                           borderColor: 'rgba(255, 255, 255, 0.5)',
+                         },
+                         '&.Mui-focused fieldset': {
+                           borderColor: 'white',
+                         },
+                       },
+                       '& .MuiInputLabel-root': {
+                         color: 'rgba(255, 255, 255, 0.7)',
+                       },
+                       '& .MuiInputBase-input': {
+                         color: 'white',
+                         opacity: 0.9,
+                         textAlign: 'center',
+                       },
+                     }}
+                   />
+                 </Box>
+               ) : (
+                 <>
+                   <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
+                     {store.name}
+                   </Typography>
+                   <Typography variant="body1" sx={{ opacity: 0.9 }}>
+                     {store.description || 'No description available'}
+                   </Typography>
+                 </>
+               )}
+             </Box>
 
-            <CardContent sx={{ p: 4 }}>
-              <Grid container spacing={3}>
+                     <CardContent sx={{ p: 4 }}>
+           {error && (
+             <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
+               {error}
+             </Alert>
+           )}
+           <Grid container spacing={3}>
                 {/* Store ID Section */}
                 <Grid item xs={12}>
-                  <Paper sx={{ p: 3, background: '#f8f9fa', borderRadius: 2 }}>
+                  <Paper sx={{ p: 3, background: 'background.default', borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
                     <Box display="flex" alignItems="center" mb={2}>
-                      <QrCode sx={{ mr: 2, color: '#1a237e' }} />
-                      <Typography variant="h6" sx={{ fontWeight: 600, color: '#1a237e' }}>
+                      <QrCode sx={{ mr: 2, color: 'primary.main' }} />
+                      <Typography variant="h6" sx={{ fontWeight: 600, color: 'primary.main' }}>
                         Store ID
                       </Typography>
                     </Box>
-                    <Typography variant="body1" sx={{ mb: 2, fontFamily: 'monospace', fontSize: '1.1rem' }}>
+                    <Typography variant="body1" sx={{ mb: 2, fontFamily: 'monospace', fontSize: '1.1rem', color: 'text.primary' }}>
                       <strong>{store.storeId}</strong>
                     </Typography>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
@@ -155,53 +315,90 @@ const StoreInfo = () => {
 
                 {/* Contact Information */}
                 <Grid item xs={12} md={6}>
-                  <Paper sx={{ p: 3, height: '100%' }}>
+                  <Paper sx={{ p: 3, height: '100%', background: 'background.default', border: '1px solid', borderColor: 'divider' }}>
                     <Box display="flex" alignItems="center" mb={2}>
-                      <LocationOn sx={{ mr: 2, color: '#2e7d32' }} />
+                      <LocationOn sx={{ mr: 2, color: 'success.main' }} />
                       <Typography variant="h6" sx={{ fontWeight: 600 }}>
                         Address
                       </Typography>
                     </Box>
-                    <Typography variant="body1">
-                      {store.address || 'No address provided'}
-                    </Typography>
+                    {isEditing ? (
+                      <TextField
+                        fullWidth
+                        name="address"
+                        value={formData.address}
+                        onChange={handleInputChange}
+                        required
+                        placeholder="Store address"
+                        size="small"
+                      />
+                    ) : (
+                      <Typography variant="body1">
+                        {store.address || 'No address provided'}
+                      </Typography>
+                    )}
                   </Paper>
                 </Grid>
 
                 <Grid item xs={12} md={6}>
-                  <Paper sx={{ p: 3, height: '100%' }}>
+                  <Paper sx={{ p: 3, height: '100%', background: 'background.default', border: '1px solid', borderColor: 'divider' }}>
                     <Box display="flex" alignItems="center" mb={2}>
-                      <Phone sx={{ mr: 2, color: '#1976d2' }} />
+                      <Phone sx={{ mr: 2, color: 'primary.main' }} />
                       <Typography variant="h6" sx={{ fontWeight: 600 }}>
                         Phone
                       </Typography>
                     </Box>
-                    <Typography variant="body1">
-                      {store.phone || 'No phone provided'}
-                    </Typography>
+                    {isEditing ? (
+                      <TextField
+                        fullWidth
+                        name="phone"
+                        value={formData.phone}
+                        onChange={handleInputChange}
+                        required
+                        placeholder="Store phone number"
+                        size="small"
+                      />
+                    ) : (
+                      <Typography variant="body1">
+                        {store.phone || 'No phone provided'}
+                      </Typography>
+                    )}
                   </Paper>
                 </Grid>
 
                 <Grid item xs={12}>
-                  <Paper sx={{ p: 3 }}>
+                  <Paper sx={{ p: 3, background: 'background.default', border: '1px solid', borderColor: 'divider' }}>
                     <Box display="flex" alignItems="center" mb={2}>
-                      <Email sx={{ mr: 2, color: '#d32f2f' }} />
+                      <Email sx={{ mr: 2, color: 'error.main' }} />
                       <Typography variant="h6" sx={{ fontWeight: 600 }}>
                         Email
                       </Typography>
                     </Box>
-                    <Typography variant="body1">
-                      {store.email || 'No email provided'}
-                    </Typography>
+                    {isEditing ? (
+                      <TextField
+                        fullWidth
+                        name="email"
+                        type="email"
+                        value={formData.email}
+                        onChange={handleInputChange}
+                        required
+                        placeholder="Store email"
+                        size="small"
+                      />
+                    ) : (
+                      <Typography variant="body1">
+                        {store.email || 'No email provided'}
+                      </Typography>
+                    )}
                   </Paper>
                 </Grid>
 
                 {/* Store Status */}
                 <Grid item xs={12}>
-                  <Paper sx={{ p: 3, background: '#e8f5e8' }}>
+                  <Paper sx={{ p: 3, background: 'success.light', border: '1px solid', borderColor: 'success.main' }}>
                     <Box display="flex" alignItems="center" mb={2}>
-                      <Business sx={{ mr: 2, color: '#2e7d32' }} />
-                      <Typography variant="h6" sx={{ fontWeight: 600, color: '#2e7d32' }}>
+                      <Business sx={{ mr: 2, color: 'success.main' }} />
+                      <Typography variant="h6" sx={{ fontWeight: 600, color: 'success.main' }}>
                         Store Status
                       </Typography>
                     </Box>
@@ -221,29 +418,63 @@ const StoreInfo = () => {
 
               {/* Action Buttons */}
               <Box display="flex" gap={2} justifyContent="center">
-                <Button
-                  variant="outlined"
-                  onClick={() => navigate('/')}
-                  sx={{ px: 4, py: 1.5 }}
-                >
-                  Back to Dashboard
-                </Button>
-                <Button
-                  variant="contained"
-                  startIcon={<Edit />}
-                  onClick={() => navigate('/edit-store')}
-                  sx={{
-                    px: 4,
-                    py: 1.5,
-                    background: 'linear-gradient(45deg, #2e7d32 30%, #4caf50 90%)',
-                    boxShadow: '0 3px 5px 2px rgba(46, 125, 50, .3)',
-                    '&:hover': {
-                      background: 'linear-gradient(45deg, #1b5e20 30%, #2e7d32 90%)',
-                    }
-                  }}
-                >
-                  Edit Store
-                </Button>
+                {!isEditing ? (
+                  <>
+                    <Button
+                      variant="outlined"
+                      onClick={() => navigate('/')}
+                      sx={{ px: 4, py: 1.5 }}
+                    >
+                      Back to Dashboard
+                    </Button>
+                    {user?.role === 'store_owner' && (
+                      <Button
+                        variant="contained"
+                        startIcon={<Edit />}
+                        onClick={handleEdit}
+                        sx={{
+                          px: 4,
+                          py: 1.5,
+                          background: 'linear-gradient(45deg, #2e7d32 30%, #4caf50 90%)',
+                          boxShadow: '0 3px 5px 2px rgba(46, 125, 50, .3)',
+                          '&:hover': {
+                            background: 'linear-gradient(45deg, #1b5e20 30%, #2e7d32 90%)',
+                          }
+                        }}
+                      >
+                        Edit Store
+                      </Button>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <Button
+                      variant="outlined"
+                      onClick={handleCancel}
+                      startIcon={<Cancel />}
+                      sx={{ px: 4, py: 1.5 }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      variant="contained"
+                      disabled={saving}
+                      startIcon={saving ? <CircularProgress size={20} /> : <Save />}
+                      onClick={handleSave}
+                      sx={{
+                        px: 4,
+                        py: 1.5,
+                        background: 'linear-gradient(45deg, #2e7d32 30%, #4caf50 90%)',
+                        boxShadow: '0 3px 5px 2px rgba(46, 125, 50, .3)',
+                        '&:hover': {
+                          background: 'linear-gradient(45deg, #1b5e20 30%, #2e7d32 90%)',
+                        }
+                      }}
+                    >
+                      {saving ? 'Saving...' : 'Save Changes'}
+                    </Button>
+                  </>
+                )}
               </Box>
             </CardContent>
           </Card>
