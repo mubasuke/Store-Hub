@@ -40,7 +40,7 @@ const getProductById = async (req, res) => {
 };
 
 const addProduct = async (req, res) => {
-  const { name, description, price, quantity, category, lowStockThreshold } = req.body;
+  const { name, description, price, quantity, category, supplier, lowStockThreshold } = req.body;
   try {
     // Check if user has a storeId
     if (!req.user.storeId) {
@@ -55,6 +55,7 @@ const addProduct = async (req, res) => {
       price, 
       quantity, 
       category,
+      supplier,
       lowStockThreshold: lowStockThreshold || 5,
       isLowStock: quantity <= (lowStockThreshold || 5),
       storeId: req.user.storeId

@@ -25,7 +25,9 @@ import {
   Logout,
   AccountCircle,
   Person,
-  Storefront
+  Storefront,
+  Loyalty,
+  Business
 } from '@mui/icons-material';
 import { useTheme } from '../../contexts/ThemeContext';
 import DarkModeToggle from '../DarkModeToggle';
@@ -79,6 +81,8 @@ const Navbar = ({ user, onLogout }) => {
         icon: <Warning />,
         badge: lowStockCount > 0 ? lowStockCount : null
       },
+      { path: '/customers', label: 'Customers', icon: <Loyalty /> },
+      { path: '/suppliers', label: 'Suppliers', icon: <Business /> },
       { path: '/store-info', label: 'Store Info', icon: <Storefront /> }
     ];
 
@@ -91,7 +95,7 @@ const Navbar = ({ user, onLogout }) => {
       ];
     }
 
-    // Employee sees sales, products, alerts, and store info
+    // Employee sees sales, products, alerts, customers, suppliers, purchase orders, and store info
     return baseItems;
   };
 
@@ -101,7 +105,9 @@ const Navbar = ({ user, onLogout }) => {
     <AppBar 
       position="static" 
       sx={{ 
-        background: 'linear-gradient(135deg, #1a237e 0%, #3949ab 100%)',
+        background: darkMode 
+          ? 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)'
+          : 'linear-gradient(135deg, #1a237e 0%, #3949ab 100%)',
         boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
       }}
     >

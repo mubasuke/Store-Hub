@@ -52,6 +52,8 @@ const Sales = () => {
   const [saleItems, setSaleItems] = useState([]);
   const [selectedEmployee, setSelectedEmployee] = useState('');
   const [customerName, setCustomerName] = useState('');
+  const [selectedCustomer, setSelectedCustomer] = useState('');
+  const [customers, setCustomers] = useState([]);
   const [discount, setDiscount] = useState(0);
   const [tax, setTax] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState('Cash');
@@ -62,15 +64,17 @@ const Sales = () => {
 
   const fetchData = async () => {
     try {
-      const [salesRes, productsRes, employeesRes] = await Promise.all([
+      const [salesRes, productsRes, employeesRes, customersRes] = await Promise.all([
         axios.get('http://localhost:5000/api/sales'),
         axios.get('http://localhost:5000/api/products'),
-        axios.get('http://localhost:5000/api/employees')
+        axios.get('http://localhost:5000/api/employees'),
+        axios.get('http://localhost:5000/api/customers')
       ]);
 
       setSales(salesRes.data);
       setProducts(productsRes.data);
       setEmployees(employeesRes.data);
+      setCustomers(customersRes.data.customers);
       setLoading(false);
     } catch (err) {
       // Check if the error is due to no store being associated
@@ -147,7 +151,8 @@ const Sales = () => {
       const saleData = {
         items: saleItems,
         employeeId: selectedEmployee,
-        customerName,
+        customerName: selectedCustomer ? customers.find(c => c._id === selectedCustomer)?.name : customerName,
+        customerId: selectedCustomer || null,
         discount,
         tax,
         paymentMethod
@@ -155,11 +160,17 @@ const Sales = () => {
 
       const response = await axios.post('http://localhost:5000/api/sales', saleData);
       
-      if (response.data.lowStockAlerts) {
-        alert(`Sale completed! Low stock alerts: ${response.data.lowStockAlerts.map(alert => alert.productName).join(', ')}`);
-      } else {
-        alert('Sale completed successfully!');
+      let message = 'Sale completed successfully!';
+      
+      if (response.data.sale.loyaltyPointsEarned > 0) {
+        message += `\nCustomer earned ${response.data.sale.loyaltyPointsEarned} loyalty points!`;
       }
+      
+      if (response.data.lowStockAlerts) {
+        message += `\nLow stock alerts: ${response.data.lowStockAlerts.map(alert => alert.productName).join(', ')}`;
+      }
+      
+      alert(message);
 
       setOpenDialog(false);
       resetForm();
@@ -178,6 +189,7 @@ const Sales = () => {
     setSaleItems([]);
     setSelectedEmployee('');
     setCustomerName('');
+    setSelectedCustomer('');
     setDiscount(0);
     setTax(0);
     setPaymentMethod('Cash');
@@ -255,9 +267,20 @@ const Sales = () => {
                       </Box>
                     </TableCell>
                     <TableCell>
-                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                        {sale.customerName}
-                      </Typography>
+                      <Box>
+                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                          {sale.customerName}
+                        </Typography>
+                        {sale.customerId && (
+                          <Chip 
+                            label={`${sale.loyaltyPointsEarned || 0} points earned`}
+                            size="small" 
+                            color="success" 
+                            variant="outlined"
+                            sx={{ mt: 0.5 }}
+                          />
+                        )}
+                      </Box>
                     </TableCell>
                     <TableCell>
                       <Box>
@@ -378,12 +401,32 @@ const Sales = () => {
               </FormControl>
             </Grid>
             <Grid item xs={12} md={6}>
+              <FormControl fullWidth>
+                <InputLabel>Customer (Loyalty Program)</InputLabel>
+                <Select
+                  value={selectedCustomer}
+                  onChange={(e) => setSelectedCustomer(e.target.value)}
+                  displayEmpty
+                >
+                  <MenuItem value="">
+                    <em>Walk-in Customer</em>
+                  </MenuItem>
+                  {customers.map((customer) => (
+                    <MenuItem key={customer._id} value={customer._id}>
+                      {customer.name} - {customer.membershipLevel} ({customer.loyaltyPoints} points)
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
-                label="Customer Name"
+                label="Customer Name (if not in loyalty program)"
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
                 placeholder="Walk-in Customer"
+                disabled={selectedCustomer !== ''}
               />
             </Grid>
             <Grid item xs={12} md={4}>

@@ -1,6 +1,7 @@
 const Sale = require('../models/Sale');
 const Product = require('../models/Product');
 const Employee = require('../models/Employee');
+const Customer = require('../models/Customer');
 
 // Get all sales
 const getSales = async (req, res) => {
@@ -24,7 +25,7 @@ const getSales = async (req, res) => {
 
 // Create a new sale
 const createSale = async (req, res) => {
-  const { items, employeeId, customerName, discount, tax, paymentMethod } = req.body;
+  const { items, employeeId, customerName, customerId, discount, tax, paymentMethod, loyaltyPointsRedeemed } = req.body;
   
   try {
     // Check if user has a storeId
@@ -90,6 +91,46 @@ const createSale = async (req, res) => {
 
     const finalAmount = totalAmount - discount + tax;
 
+    // Handle customer loyalty points
+    let customer = null;
+    let loyaltyPointsEarned = 0;
+    
+    if (customerId) {
+      customer = await Customer.findOne({ 
+        _id: customerId, 
+        storeId: req.user.storeId 
+      });
+      
+      if (customer) {
+        // Calculate points earned
+        loyaltyPointsEarned = customer.calculatePointsEarned(finalAmount);
+        
+        // Update customer's total spent and last purchase date
+        customer.totalSpent += finalAmount;
+        customer.lastPurchaseDate = new Date();
+        
+        // Update membership level
+        const newMembershipLevel = customer.calculateMembershipLevel();
+        if (newMembershipLevel !== customer.membershipLevel) {
+          customer.membershipLevel = newMembershipLevel;
+        }
+        
+        // Add loyalty points
+        customer.loyaltyPoints += loyaltyPointsEarned;
+        
+        // Deduct redeemed points if any
+        if (loyaltyPointsRedeemed && loyaltyPointsRedeemed > 0) {
+          if (customer.loyaltyPoints >= loyaltyPointsRedeemed) {
+            customer.loyaltyPoints -= loyaltyPointsRedeemed;
+          } else {
+            return res.status(400).json({ message: 'Insufficient loyalty points for redemption' });
+          }
+        }
+        
+        await customer.save();
+      }
+    }
+
     const newSale = new Sale({
       items: updatedItems,
       totalAmount,
@@ -98,6 +139,9 @@ const createSale = async (req, res) => {
       finalAmount,
       employeeId,
       customerName: customerName || 'Walk-in Customer',
+      customerId: customerId || null,
+      loyaltyPointsEarned,
+      loyaltyPointsRedeemed: loyaltyPointsRedeemed || 0,
       paymentMethod: paymentMethod || 'Cash',
       storeId: req.user.storeId
     });

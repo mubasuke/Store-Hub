@@ -12,6 +12,8 @@ import Login from './Pages/Login';
 import Register from './Pages/Register';
 import CreateStore from './Pages/CreateStore';
 import StoreInfo from './Pages/StoreInfo';
+import Customers from './Pages/Customers';
+import Suppliers from './Pages/Suppliers';
 import ProtectedRoute from './Components/ProtectedRoute';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import axios from 'axios';
@@ -220,6 +222,23 @@ const AppContent = () => {
                 </ProtectedRoute>
               } 
             />
+            <Route 
+              path="/customers" 
+              element={
+                <ProtectedRoute allowedRoles={['store_owner', 'employee']}>
+                  <Customers />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/suppliers" 
+              element={
+                <ProtectedRoute allowedRoles={['store_owner', 'employee']}>
+                  <Suppliers />
+                </ProtectedRoute>
+              } 
+            />
+
 
             {/* Default redirect */}
             <Route path="*" element={<Navigate to="/login" replace />} />

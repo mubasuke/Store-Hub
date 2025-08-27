@@ -35,6 +35,7 @@ import {
   CheckCircle,
   Cancel
 } from '@mui/icons-material';
+import { FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import axios from 'axios';
 
 const Products = () => {
@@ -49,11 +50,14 @@ const Products = () => {
     price: '',
     quantity: '',
     category: '',
+    supplier: '',
     lowStockThreshold: '5'
   });
+  const [suppliers, setSuppliers] = useState([]);
 
   useEffect(() => {
     fetchProducts();
+    fetchSuppliers();
   }, []);
 
   const fetchProducts = async () => {
@@ -72,6 +76,16 @@ const Products = () => {
     }
   };
 
+  const fetchSuppliers = async () => {
+    try {
+      const response = await axios.get('http://localhost:5000/api/suppliers');
+      setSuppliers(response.data.suppliers);
+    } catch (err) {
+      console.error('Failed to load suppliers:', err);
+      // Don't show error for suppliers as it's optional for products
+    }
+  };
+
   const handleOpenDialog = (product = null) => {
     if (product) {
       setEditingProduct(product);
@@ -81,6 +95,7 @@ const Products = () => {
         price: product.price.toString(),
         quantity: product.quantity.toString(),
         category: product.category,
+        supplier: product.supplier || '',
         lowStockThreshold: product.lowStockThreshold.toString()
       });
     } else {
@@ -91,6 +106,7 @@ const Products = () => {
         price: '',
         quantity: '',
         category: '',
+        supplier: '',
         lowStockThreshold: '5'
       });
     }
@@ -267,6 +283,7 @@ const Products = () => {
                   <TableCell sx={{ fontWeight: 600 }}>Price</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Quantity</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Category</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Supplier</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Actions</TableCell>
                 </TableRow>
@@ -306,6 +323,20 @@ const Products = () => {
                         color="primary" 
                         variant="outlined"
                       />
+                    </TableCell>
+                    <TableCell>
+                      {product.supplier ? (
+                        <Chip 
+                          label={suppliers.find(s => s._id === product.supplier)?.name || 'Unknown'} 
+                          size="small" 
+                          color="secondary" 
+                          variant="outlined"
+                        />
+                      ) : (
+                        <Typography variant="body2" color="text.secondary">
+                          No supplier
+                        </Typography>
+                      )}
                     </TableCell>
                     <TableCell>
                       {product.isLowStock ? (
@@ -411,6 +442,25 @@ const Products = () => {
                 required
                 placeholder="e.g., Electronics, Clothing"
               />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth>
+                <InputLabel>Supplier</InputLabel>
+                <Select
+                  value={formData.supplier}
+                  onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
+                  label="Supplier"
+                >
+                  <MenuItem value="">
+                    <em>No supplier</em>
+                  </MenuItem>
+                  {suppliers.map((supplier) => (
+                    <MenuItem key={supplier._id} value={supplier._id}>
+                      {supplier.name} - {supplier.companyName}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
             </Grid>
             <Grid item xs={12} md={6}>
               <TextField
