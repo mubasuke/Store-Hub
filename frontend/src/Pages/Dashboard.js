@@ -11,7 +11,8 @@ import {
   CircularProgress,
   Paper,
   Divider,
-  Button
+  Button,
+  TextField
 } from '@mui/material';
 import {
   Inventory,
@@ -22,6 +23,7 @@ import {
   Storefront
 } from '@mui/icons-material';
 import axios from 'axios';
+import RevenueChart from '../Components/RevenueChart';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -267,6 +269,74 @@ const Dashboard = () => {
         </Paper>
       )}
 
+      {/* Revenue Chart and Notes Section */}
+      <Grid container spacing={3} mb={4}>
+        <Grid item xs={12} md={8}>
+          <RevenueChart />
+        </Grid>
+        <Grid item xs={12} md={4}>
+          <Paper sx={{ p: 3, borderRadius: 3, boxShadow: 3, height: '100%' }}>
+            <Box display="flex" alignItems="center" mb={3}>
+              <Box
+                sx={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  mr: 2
+                }}
+              >
+                <Typography sx={{ color: 'white', fontWeight: 600, fontSize: '1.2rem' }}>
+                  📝
+                </Typography>
+              </Box>
+              <Typography variant="h5" sx={{ fontWeight: 600, color: 'primary.main' }}>
+                Store Notes
+              </Typography>
+            </Box>
+            <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+              Write down your thoughts, ideas, and plans for store improvements.
+            </Typography>
+            <TextField
+              multiline
+              rows={12}
+              fullWidth
+              placeholder="Write your store notes here...
+
+• Ideas for new products
+• Customer feedback to address
+• Store layout improvements
+• Marketing strategies
+• Equipment upgrades needed
+• Staff training topics
+• Seasonal promotions
+• Inventory adjustments"
+              variant="outlined"
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  '& fieldset': {
+                    borderColor: 'rgba(0,0,0,0.1)',
+                  },
+                  '&:hover fieldset': {
+                    borderColor: 'rgba(0,0,0,0.2)',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: 'primary.main',
+                  },
+                },
+              }}
+            />
+            <Box display="flex" justifyContent="center" alignItems="center" mt={2}>
+              <Typography variant="caption" color="text.secondary">
+                Your notes are saved automatically
+              </Typography>
+            </Box>
+          </Paper>
+        </Grid>
+      </Grid>
 
     </Container>
   );

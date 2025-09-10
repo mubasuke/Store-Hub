@@ -25,7 +25,11 @@ import {
   CardContent,
   Grid,
   Switch,
-  FormControlLabel
+  FormControlLabel,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem
 } from '@mui/material';
 import {
   Add,
@@ -208,57 +212,6 @@ const Suppliers = () => {
         </Alert>
       )}
 
-      {/* Stats Cards */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Typography color="text.secondary" gutterBottom>
-                Total Suppliers
-              </Typography>
-              <Typography variant="h4" component="div">
-                {suppliers.length}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Typography color="text.secondary" gutterBottom>
-                Active Suppliers
-              </Typography>
-              <Typography variant="h4" component="div">
-                {suppliers.filter(s => s.isActive).length}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Typography color="text.secondary" gutterBottom>
-                Inactive Suppliers
-              </Typography>
-              <Typography variant="h4" component="div">
-                {suppliers.filter(s => !s.isActive).length}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Typography color="text.secondary" gutterBottom>
-                Net 30 Terms
-              </Typography>
-              <Typography variant="h4" component="div">
-                {suppliers.filter(s => s.paymentTerms === 'Net 30').length}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
 
       {/* Search and Add Button */}
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
@@ -454,21 +407,24 @@ const Suppliers = () => {
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Payment Terms"
-                  name="paymentTerms"
-                  value={formData.paymentTerms}
-                  onChange={handleInputChange}
-                  margin="normal"
-                  select
-                >
-                  <option value="Net 30">Net 30</option>
-                  <option value="Net 60">Net 60</option>
-                  <option value="Net 90">Net 90</option>
-                  <option value="Cash on Delivery">Cash on Delivery</option>
-                  <option value="Advance Payment">Advance Payment</option>
-                </TextField>
+                <FormControl fullWidth margin="normal">
+                  <InputLabel>Payment Terms</InputLabel>
+                  <Select
+                    name="paymentTerms"
+                    value={formData.paymentTerms}
+                    onChange={handleInputChange}
+                    label="Payment Terms"
+                  >
+                    <MenuItem value="Net 30">Net 30</MenuItem>
+                    <MenuItem value="Net 60">Net 60</MenuItem>
+                    <MenuItem value="Net 90">Net 90</MenuItem>
+                    <MenuItem value="Cash on Delivery">Cash on Delivery</MenuItem>
+                    <MenuItem value="Advance Payment">Advance Payment</MenuItem>
+                    <MenuItem value="2/10 Net 30">2/10 Net 30</MenuItem>
+                    <MenuItem value="1/15 Net 45">1/15 Net 45</MenuItem>
+                    <MenuItem value="Due on Receipt">Due on Receipt</MenuItem>
+                  </Select>
+                </FormControl>
               </Grid>
               <Grid item xs={12} sm={6}>
                 <FormControlLabel

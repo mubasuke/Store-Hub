@@ -2,7 +2,6 @@ const Sale = require('../models/Sale');
 const Product = require('../models/Product');
 const Employee = require('../models/Employee');
 const Customer = require('../models/Customer');
-
 // Get all sales
 const getSales = async (req, res) => {
   try {
@@ -25,7 +24,7 @@ const getSales = async (req, res) => {
 
 // Create a new sale
 const createSale = async (req, res) => {
-  const { items, employeeId, customerName, customerId, discount, tax, paymentMethod, loyaltyPointsRedeemed } = req.body;
+  const { items, customerName, customerId, discount, tax, paymentMethod, loyaltyPointsRedeemed } = req.body;
   
   try {
     // Check if user has a storeId
@@ -35,14 +34,8 @@ const createSale = async (req, res) => {
       });
     }
     
-    // Validate employee exists and belongs to this store
-    const employee = await Employee.findOne({ 
-      _id: employeeId, 
-      storeId: req.user.storeId 
-    });
-    if (!employee) {
-      return res.status(404).json({ message: 'Employee not found' });
-    }
+    // Use the current user's ID as the employee ID
+    const employeeId = req.user.userId;
 
     // Calculate totals and validate stock
     let totalAmount = 0;
@@ -89,11 +82,10 @@ const createSale = async (req, res) => {
       }
     }
 
-    const finalAmount = totalAmount - discount + tax;
-
-    // Handle customer loyalty points
+    // Handle customer loyalty points and point-based discounts
     let customer = null;
     let loyaltyPointsEarned = 0;
+    let pointBasedDiscount = 0;
     
     if (customerId) {
       customer = await Customer.findOne({ 
@@ -102,39 +94,47 @@ const createSale = async (req, res) => {
       });
       
       if (customer) {
-        // Calculate points earned
-        loyaltyPointsEarned = customer.calculatePointsEarned(finalAmount);
-        
-        // Update customer's total spent and last purchase date
-        customer.totalSpent += finalAmount;
-        customer.lastPurchaseDate = new Date();
-        
-        // Update membership level
-        const newMembershipLevel = customer.calculateMembershipLevel();
-        if (newMembershipLevel !== customer.membershipLevel) {
-          customer.membershipLevel = newMembershipLevel;
-        }
-        
-        // Add loyalty points
-        customer.loyaltyPoints += loyaltyPointsEarned;
-        
-        // Deduct redeemed points if any
+        // Handle point-based discount redemption first
         if (loyaltyPointsRedeemed && loyaltyPointsRedeemed > 0) {
           if (customer.loyaltyPoints >= loyaltyPointsRedeemed) {
+            // Calculate discount amount from points (1 point = $0.01)
+            pointBasedDiscount = customer.calculateDiscountFromPoints(loyaltyPointsRedeemed);
             customer.loyaltyPoints -= loyaltyPointsRedeemed;
           } else {
             return res.status(400).json({ message: 'Insufficient loyalty points for redemption' });
           }
         }
-        
-        await customer.save();
       }
+    }
+
+    // Calculate final amount after all discounts
+    const finalAmount = totalAmount - discount - pointBasedDiscount + tax;
+
+    // Calculate points earned and update customer if customer exists
+    if (customer) {
+      // Calculate points earned on the final amount (after discounts)
+      loyaltyPointsEarned = customer.calculatePointsEarned(finalAmount);
+      
+      // Update customer's total spent and last purchase date
+      customer.totalSpent += finalAmount;
+      customer.lastPurchaseDate = new Date();
+      
+      // Update membership level
+      const newMembershipLevel = customer.calculateMembershipLevel();
+      if (newMembershipLevel !== customer.membershipLevel) {
+        customer.membershipLevel = newMembershipLevel;
+      }
+      
+      // Add loyalty points
+      customer.loyaltyPoints += loyaltyPointsEarned;
+      
+      await customer.save();
     }
 
     const newSale = new Sale({
       items: updatedItems,
       totalAmount,
-      discount: discount || 0,
+      discount: (discount || 0) + pointBasedDiscount, // Include point-based discount in total discount
       tax: tax || 0,
       finalAmount,
       employeeId,
@@ -247,10 +247,64 @@ const deleteSale = async (req, res) => {
   }
 };
 
+// Get revenue data for dashboard
+const getRevenueData = async (req, res) => {
+  try {
+    // Check if user has a storeId
+    if (!req.user.storeId) {
+      return res.status(400).json({ 
+        message: 'No store associated with this account. Please create a store first.' 
+      });
+    }
+    
+    // Get sales data for the last 7 days
+    const endDate = new Date();
+    const startDate = new Date(endDate.getTime() - 7 * 24 * 60 * 60 * 1000);
+    
+    // Get sales data grouped by date
+    const sales = await Sale.aggregate([
+      {
+        $match: {
+          storeId: req.user.storeId,
+          saleDate: { $gte: startDate, $lte: endDate }
+        }
+      },
+      {
+        $group: {
+          _id: {
+            $dateToString: {
+              format: '%Y-%m-%d',
+              date: '$saleDate'
+            }
+          },
+          totalRevenue: { $sum: '$finalAmount' },
+          totalSales: { $sum: 1 }
+        }
+      },
+      {
+        $sort: { _id: 1 }
+      }
+    ]);
+    
+    // Calculate total revenue
+    const totalRevenue = sales.reduce((sum, sale) => sum + sale.totalRevenue, 0);
+    const totalSalesCount = sales.reduce((sum, sale) => sum + sale.totalSales, 0);
+    
+    res.json({
+      totalRevenue,
+      totalSalesCount,
+      dailyData: sales
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
 module.exports = {
   getSales,
   createSale,
   getSaleById,
   getLowStockProducts,
-  deleteSale
+  deleteSale,
+  getRevenueData
 }; 

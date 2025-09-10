@@ -37,26 +37,28 @@ import {
   Receipt,
   Warning,
   CheckCircle,
-  Cancel
+  Cancel,
+  LocalOffer,
+  Loyalty
 } from '@mui/icons-material';
 import axios from 'axios';
 
 const Sales = () => {
   const [sales, setSales] = useState([]);
   const [products, setProducts] = useState([]);
-  const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [openDialog, setOpenDialog] = useState(false);
   const [deleteDialog, setDeleteDialog] = useState({ open: false, sale: null });
   const [saleItems, setSaleItems] = useState([]);
-  const [selectedEmployee, setSelectedEmployee] = useState('');
   const [customerName, setCustomerName] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState('');
   const [customers, setCustomers] = useState([]);
   const [discount, setDiscount] = useState(0);
   const [tax, setTax] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState('Cash');
+  const [loyaltyPointsRedeemed, setLoyaltyPointsRedeemed] = useState(0);
+  const [selectedCustomerData, setSelectedCustomerData] = useState(null);
 
   useEffect(() => {
     fetchData();
@@ -64,16 +66,14 @@ const Sales = () => {
 
   const fetchData = async () => {
     try {
-      const [salesRes, productsRes, employeesRes, customersRes] = await Promise.all([
+      const [salesRes, productsRes, customersRes] = await Promise.all([
         axios.get('http://localhost:5000/api/sales'),
         axios.get('http://localhost:5000/api/products'),
-        axios.get('http://localhost:5000/api/employees'),
         axios.get('http://localhost:5000/api/customers')
       ]);
 
       setSales(salesRes.data);
       setProducts(productsRes.data);
-      setEmployees(employeesRes.data);
       setCustomers(customersRes.data.customers);
       setLoading(false);
     } catch (err) {
@@ -129,18 +129,14 @@ const Sales = () => {
   const calculateTotals = () => {
     const subtotal = saleItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const discountAmount = (subtotal * discount) / 100;
-    const taxAmount = ((subtotal - discountAmount) * tax) / 100;
-    const total = subtotal - discountAmount + taxAmount;
+    const pointDiscountAmount = loyaltyPointsRedeemed * 0.01; // 1 point = $0.01
+    const taxAmount = ((subtotal - discountAmount - pointDiscountAmount) * tax) / 100;
+    const total = subtotal - discountAmount - pointDiscountAmount + taxAmount;
     
-    return { subtotal, discountAmount, taxAmount, total };
+    return { subtotal, discountAmount, pointDiscountAmount, taxAmount, total };
   };
 
   const handleSubmit = async () => {
-    if (!selectedEmployee) {
-      setError('Please select an employee');
-      return;
-    }
-
     if (saleItems.length === 0) {
       setError('Please add at least one item');
       return;
@@ -150,12 +146,12 @@ const Sales = () => {
       const { total } = calculateTotals();
       const saleData = {
         items: saleItems,
-        employeeId: selectedEmployee,
         customerName: selectedCustomer ? customers.find(c => c._id === selectedCustomer)?.name : customerName,
         customerId: selectedCustomer || null,
         discount,
         tax,
-        paymentMethod
+        paymentMethod,
+        loyaltyPointsRedeemed
       };
 
       const response = await axios.post('http://localhost:5000/api/sales', saleData);
@@ -164,6 +160,10 @@ const Sales = () => {
       
       if (response.data.sale.loyaltyPointsEarned > 0) {
         message += `\nCustomer earned ${response.data.sale.loyaltyPointsEarned} loyalty points!`;
+      }
+      
+      if (loyaltyPointsRedeemed > 0) {
+        message += `\nCustomer redeemed ${loyaltyPointsRedeemed} points for $${(loyaltyPointsRedeemed * 0.01).toFixed(2)} discount!`;
       }
       
       if (response.data.lowStockAlerts) {
@@ -187,15 +187,29 @@ const Sales = () => {
 
   const resetForm = () => {
     setSaleItems([]);
-    setSelectedEmployee('');
     setCustomerName('');
     setSelectedCustomer('');
     setDiscount(0);
     setTax(0);
     setPaymentMethod('Cash');
+    setLoyaltyPointsRedeemed(0);
+    setSelectedCustomerData(null);
   };
 
-  const { subtotal, discountAmount, taxAmount, total } = calculateTotals();
+  const { subtotal, discountAmount, pointDiscountAmount, taxAmount, total } = calculateTotals();
+
+  // Handle customer selection change
+  const handleCustomerChange = (customerId) => {
+    setSelectedCustomer(customerId);
+    setLoyaltyPointsRedeemed(0); // Reset points redemption when customer changes
+    
+    if (customerId) {
+      const customer = customers.find(c => c._id === customerId);
+      setSelectedCustomerData(customer);
+    } else {
+      setSelectedCustomerData(null);
+    }
+  };
 
   if (loading) {
     return (
@@ -246,7 +260,6 @@ const Sales = () => {
                 <TableRow sx={{ backgroundColor: 'background.default' }}>
                   <TableCell sx={{ fontWeight: 600 }}>Date</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Customer</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Employee</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Items</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Total</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Payment</TableCell>
@@ -280,20 +293,6 @@ const Sales = () => {
                             sx={{ mt: 0.5 }}
                           />
                         )}
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <Box>
-                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                          {sale.employeeId?.name}
-                        </Typography>
-                        <Chip 
-                          label={sale.employeeId?.role} 
-                          size="small" 
-                          color="primary" 
-                          variant="outlined"
-                          sx={{ mt: 0.5 }}
-                        />
                       </Box>
                     </TableCell>
                     <TableCell>
@@ -386,26 +385,10 @@ const Sales = () => {
           <Grid container spacing={3}>
             <Grid item xs={12} md={6}>
               <FormControl fullWidth>
-                <InputLabel>Employee</InputLabel>
-                <Select
-                  value={selectedEmployee}
-                  onChange={(e) => setSelectedEmployee(e.target.value)}
-                  required
-                >
-                  {employees.map((employee) => (
-                    <MenuItem key={employee._id} value={employee._id}>
-                      {employee.name} - {employee.role}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <FormControl fullWidth>
                 <InputLabel>Customer (Loyalty Program)</InputLabel>
                 <Select
                   value={selectedCustomer}
-                  onChange={(e) => setSelectedCustomer(e.target.value)}
+                  onChange={(e) => handleCustomerChange(e.target.value)}
                   displayEmpty
                 >
                   <MenuItem value="">
@@ -413,7 +396,15 @@ const Sales = () => {
                   </MenuItem>
                   {customers.map((customer) => (
                     <MenuItem key={customer._id} value={customer._id}>
-                      {customer.name} - {customer.membershipLevel} ({customer.loyaltyPoints} points)
+                      <Box>
+                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                          {customer.name} - {customer.membershipLevel}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {customer.loyaltyPoints} points
+                          {customer.discountEligibility && ` • Eligible for ${customer.discountEligibility.description}`}
+                        </Typography>
+                      </Box>
                     </MenuItem>
                   ))}
                 </Select>
@@ -429,6 +420,66 @@ const Sales = () => {
                 disabled={selectedCustomer !== ''}
               />
             </Grid>
+            
+            {/* Loyalty Points Redemption Section */}
+            {selectedCustomerData && (
+              <Grid item xs={12}>
+                <Card sx={{ backgroundColor: '#f8f9fa', border: '1px solid #e0e0e0' }}>
+                  <CardContent>
+                    <Box display="flex" alignItems="center" mb={2}>
+                      <Loyalty sx={{ mr: 1, color: 'primary.main' }} />
+                      <Typography variant="h6" sx={{ fontWeight: 600, color: 'primary.main' }}>
+                        Loyalty Points Redemption
+                      </Typography>
+                    </Box>
+                    
+                    <Grid container spacing={2} alignItems="center">
+                      <Grid item xs={12} md={4}>
+                        <Typography variant="body2" color="text.secondary">
+                          Available Points: <strong>{selectedCustomerData.loyaltyPoints}</strong>
+                        </Typography>
+                        {selectedCustomerData.discountEligibility && (
+                          <Typography variant="body2" color="success.main" sx={{ mt: 0.5 }}>
+                            <LocalOffer sx={{ fontSize: 16, mr: 0.5 }} />
+                            Eligible for {selectedCustomerData.discountEligibility.description}
+                          </Typography>
+                        )}
+                      </Grid>
+                      <Grid item xs={12} md={4}>
+                        <TextField
+                          fullWidth
+                          label="Points to Redeem"
+                          type="number"
+                          value={loyaltyPointsRedeemed}
+                          onChange={(e) => {
+                            const points = parseInt(e.target.value) || 0;
+                            const maxPoints = Math.min(points, selectedCustomerData.loyaltyPoints);
+                            setLoyaltyPointsRedeemed(maxPoints);
+                          }}
+                          InputProps={{ 
+                            inputProps: { 
+                              min: 0, 
+                              max: selectedCustomerData.loyaltyPoints 
+                            } 
+                          }}
+                          helperText={`1 point = $0.01 discount`}
+                        />
+                      </Grid>
+                      <Grid item xs={12} md={4}>
+                        <Typography variant="body2" color="text.secondary">
+                          Discount Amount: <strong>${(loyaltyPointsRedeemed * 0.01).toFixed(2)}</strong>
+                        </Typography>
+                        {loyaltyPointsRedeemed > 0 && (
+                          <Typography variant="caption" color="success.main">
+                            Customer will have {selectedCustomerData.loyaltyPoints - loyaltyPointsRedeemed} points remaining
+                          </Typography>
+                        )}
+                      </Grid>
+                    </Grid>
+                  </CardContent>
+                </Card>
+              </Grid>
+            )}
             <Grid item xs={12} md={4}>
               <TextField
                 fullWidth
@@ -552,11 +603,21 @@ const Sales = () => {
                       <Typography variant="body2" sx={{ fontWeight: 600 }}>${subtotal.toFixed(2)}</Typography>
                     </Grid>
                     <Grid item xs={6}>
-                      <Typography variant="body2" color="text.secondary">Discount:</Typography>
+                      <Typography variant="body2" color="text.secondary">Discount (%):</Typography>
                     </Grid>
                     <Grid item xs={6}>
                       <Typography variant="body2" sx={{ fontWeight: 600, color: '#d32f2f' }}>-${discountAmount.toFixed(2)}</Typography>
                     </Grid>
+                    {loyaltyPointsRedeemed > 0 && (
+                      <>
+                        <Grid item xs={6}>
+                          <Typography variant="body2" color="text.secondary">Points Discount:</Typography>
+                        </Grid>
+                        <Grid item xs={6}>
+                          <Typography variant="body2" sx={{ fontWeight: 600, color: '#d32f2f' }}>-${pointDiscountAmount.toFixed(2)}</Typography>
+                        </Grid>
+                      </>
+                    )}
                     <Grid item xs={6}>
                       <Typography variant="body2" color="text.secondary">Tax:</Typography>
                     </Grid>

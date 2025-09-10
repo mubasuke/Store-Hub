@@ -33,7 +33,8 @@ import {
   Warning,
   Inventory,
   CheckCircle,
-  Cancel
+  Cancel,
+  Search
 } from '@mui/icons-material';
 import { FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import axios from 'axios';
@@ -44,6 +45,8 @@ const Products = () => {
   const [error, setError] = useState('');
   const [openDialog, setOpenDialog] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filteredProducts, setFilteredProducts] = useState([]);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -205,72 +208,35 @@ const Products = () => {
         </Alert>
       )}
 
-      {/* Summary Cards */}
-      <Grid container spacing={3} mb={4}>
-        <Grid item xs={12} md={4}>
-          <Card sx={{ 
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            borderRadius: 3,
-            color: 'white'
-          }}>
-            <CardContent>
-              <Box display="flex" alignItems="center" justifyContent="space-between">
-                <Box>
-                  <Typography variant="h6" sx={{ opacity: 0.9 }}>
-                    Total Products
-                  </Typography>
-                  <Typography variant="h3" sx={{ fontWeight: 700 }}>
-                    {products.length}
-                  </Typography>
-                </Box>
-                <Inventory sx={{ fontSize: 40, opacity: 0.9 }} />
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} md={4}>
-          <Card sx={{ 
-            background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-            borderRadius: 3,
-            color: 'white'
-          }}>
-            <CardContent>
-              <Box display="flex" alignItems="center" justifyContent="space-between">
-                <Box>
-                  <Typography variant="h6" sx={{ opacity: 0.9 }}>
-                    In Stock
-                  </Typography>
-                  <Typography variant="h3" sx={{ fontWeight: 700 }}>
-                    {inStockProducts.length}
-                  </Typography>
-                </Box>
-                <CheckCircle sx={{ fontSize: 40, opacity: 0.9 }} />
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} md={4}>
-          <Card sx={{ 
-            background: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
-            borderRadius: 3,
-            color: 'white'
-          }}>
-            <CardContent>
-              <Box display="flex" alignItems="center" justifyContent="space-between">
-                <Box>
-                  <Typography variant="h6" sx={{ opacity: 0.9 }}>
-                    Low Stock
-                  </Typography>
-                  <Typography variant="h3" sx={{ fontWeight: 700 }}>
-                    {lowStockProducts.length}
-                  </Typography>
-                </Box>
-                <Warning sx={{ fontSize: 40, opacity: 0.9 }} />
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+      {/* Search Bar */}
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+        <TextField
+          placeholder="Search products..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          sx={{ width: 300 }}
+          InputProps={{
+            startAdornment: <Search sx={{ mr: 1, color: 'text.secondary' }} />
+          }}
+        />
+        <Box display="flex" gap={2}>
+          <Chip
+            label={`Total: ${products.length}`}
+            color="primary"
+            variant="outlined"
+          />
+          <Chip
+            label={`Low Stock: ${lowStockProducts.length}`}
+            color="warning"
+            variant="outlined"
+          />
+          <Chip
+            label={`In Stock: ${inStockProducts.length}`}
+            color="success"
+            variant="outlined"
+          />
+        </Box>
+      </Box>
 
       <Card sx={{ borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }}>
         <CardContent sx={{ p: 0 }}>

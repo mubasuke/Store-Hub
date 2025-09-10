@@ -49,5 +49,47 @@ customerSchema.methods.calculatePointsEarned = function(purchaseAmount) {
   return Math.floor(purchaseAmount * pointsPerDollar);
 };
 
+// Check if customer is eligible for discount based on points
+customerSchema.methods.getDiscountEligibility = function() {
+  const discountTiers = [
+    { points: 100, discount: 5, description: '5% discount' },
+    { points: 250, discount: 10, description: '10% discount' },
+    { points: 500, discount: 15, description: '15% discount' },
+    { points: 1000, discount: 20, description: '20% discount' }
+  ];
+
+  // Find the highest tier the customer qualifies for
+  let eligibleTier = null;
+  for (let i = discountTiers.length - 1; i >= 0; i--) {
+    if (this.loyaltyPoints >= discountTiers[i].points) {
+      eligibleTier = discountTiers[i];
+      break;
+    }
+  }
+
+  return eligibleTier;
+};
+
+// Calculate how many points are needed for next discount tier
+customerSchema.methods.getPointsToNextTier = function() {
+  const discountTiers = [100, 250, 500, 1000];
+  
+  for (const tier of discountTiers) {
+    if (this.loyaltyPoints < tier) {
+      return tier - this.loyaltyPoints;
+    }
+
+  }
+  
+  return 0; // Customer has reached the highest tier
+};
+
+// Calculate discount amount based on points redeemed
+customerSchema.methods.calculateDiscountFromPoints = function(pointsToRedeem) {
+  // 1 point = $0.01 discount (100 points = $1.00 discount)
+  return Math.min(pointsToRedeem * 0.01, this.loyaltyPoints * 0.01);
+};
+
 const Customer = mongoose.model('Customer', customerSchema);
 module.exports = Customer;
+

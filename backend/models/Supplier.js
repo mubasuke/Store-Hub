@@ -9,7 +9,11 @@ const supplierSchema = new Schema({
   contactPerson: { type: String },
   companyName: { type: String },
   taxId: { type: String },
-  paymentTerms: { type: String, default: 'Net 30' },
+  paymentTerms: { 
+    type: String, 
+    enum: ['Net 30', 'Net 60', 'Net 90', 'Cash on Delivery', 'Advance Payment', '2/10 Net 30', '1/15 Net 45', 'Due on Receipt'],
+    default: 'Net 30' 
+  },
   isActive: { type: Boolean, default: true },
   notes: { type: String },
   storeId: { type: Schema.Types.ObjectId, ref: 'Store', required: true },

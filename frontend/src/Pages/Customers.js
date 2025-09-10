@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Container,
   Typography,
@@ -37,11 +38,14 @@ import {
   Star,
   Search,
   PersonAdd,
-  Loyalty
+  Loyalty,
+  LocalOffer,
+  TrendingUp
 } from '@mui/icons-material';
 import axios from 'axios';
 
 const Customers = () => {
+  const navigate = useNavigate();
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -82,7 +86,7 @@ const Customers = () => {
     } catch (err) {
       console.error('Error fetching customers:', err);
       if (err.response?.data?.message?.includes('No store associated')) {
-        setError('You need to create a store first to manage customers.');
+        setError('You need to create a store first to manage customers. Please go to the Store Info page to create your store.');
       } else {
         setError('Failed to load customers');
       }
@@ -132,6 +136,12 @@ const Customers = () => {
 
   const handleSubmit = async () => {
     try {
+      // Validate required fields
+      if (!formData.name || !formData.email || !formData.phone) {
+        setError('Name, email, and phone are required fields');
+        return;
+      }
+
       if (editingCustomer) {
         await axios.put(`http://localhost:5000/api/customers/${editingCustomer._id}`, formData);
       } else {
@@ -139,9 +149,17 @@ const Customers = () => {
       }
       fetchCustomers();
       handleCloseDialog();
+      setError(''); // Clear any previous errors
     } catch (err) {
       console.error('Error saving customer:', err);
-      setError(err.response?.data?.message || 'Failed to save customer');
+      const errorMessage = err.response?.data?.message || 'Failed to save customer';
+      
+      // Check if the error is about missing store
+      if (errorMessage.includes('No store associated')) {
+        setError('You need to create a store first before adding customers. Please go to the Store Info page to create your store.');
+      } else {
+        setError(errorMessage);
+      }
     }
   };
 
@@ -167,6 +185,14 @@ const Customers = () => {
     }
   };
 
+  const getDiscountEligibilityColor = (eligibility) => {
+    if (!eligibility) return 'default';
+    if (eligibility.discount >= 15) return 'error';
+    if (eligibility.discount >= 10) return 'warning';
+    if (eligibility.discount >= 5) return 'success';
+    return 'default';
+  };
+
   if (loading) {
     return (
       <Container maxWidth="lg" sx={{ mt: 2 }}>
@@ -189,62 +215,26 @@ const Customers = () => {
       </Box>
 
       {error && (
-        <Alert severity="error" sx={{ mb: 3 }}>
+        <Alert 
+          severity="error" 
+          sx={{ mb: 3 }}
+          action={
+            error.includes('create a store first') ? (
+              <Button
+                color="inherit"
+                size="small"
+                onClick={() => navigate('/create-store')}
+                sx={{ ml: 2 }}
+              >
+                Create Store
+              </Button>
+            ) : null
+          }
+        >
           {error}
         </Alert>
       )}
 
-      {/* Stats Cards */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Typography color="text.secondary" gutterBottom>
-                Total Customers
-              </Typography>
-              <Typography variant="h4" component="div">
-                {customers.length}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Typography color="text.secondary" gutterBottom>
-                Active Members
-              </Typography>
-              <Typography variant="h4" component="div">
-                {customers.filter(c => c.isActive).length}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Typography color="text.secondary" gutterBottom>
-                Total Points Issued
-              </Typography>
-              <Typography variant="h4" component="div">
-                {customers.reduce((sum, c) => sum + c.loyaltyPoints, 0)}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Typography color="text.secondary" gutterBottom>
-                Platinum Members
-              </Typography>
-              <Typography variant="h4" component="div">
-                {customers.filter(c => c.membershipLevel === 'Platinum').length}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
 
       {/* Search and Add Button */}
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
@@ -282,6 +272,7 @@ const Customers = () => {
               <TableCell sx={{ fontWeight: 600 }}>Contact</TableCell>
               <TableCell sx={{ fontWeight: 600 }}>Membership</TableCell>
               <TableCell sx={{ fontWeight: 600 }}>Loyalty Points</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>Discount Eligibility</TableCell>
               <TableCell sx={{ fontWeight: 600 }}>Total Spent</TableCell>
               <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
               <TableCell sx={{ fontWeight: 600 }}>Actions</TableCell>
@@ -323,6 +314,35 @@ const Customers = () => {
                       {customer.loyaltyPoints}
                     </Typography>
                   </Box>
+                  {customer.pointsToNextTier > 0 && (
+                    <Typography variant="caption" color="text.secondary">
+                      {customer.pointsToNextTier} to next tier
+                    </Typography>
+                  )}
+                </TableCell>
+                <TableCell>
+                  {customer.discountEligibility ? (
+                    <Box>
+                      <Chip
+                        label={customer.discountEligibility.description}
+                        color={getDiscountEligibilityColor(customer.discountEligibility)}
+                        size="small"
+                        icon={<LocalOffer />}
+                      />
+                      <Typography variant="caption" display="block" color="text.secondary">
+                        {customer.discountEligibility.points} points required
+                      </Typography>
+                    </Box>
+                  ) : (
+                    <Box>
+                      <Typography variant="body2" color="text.secondary">
+                        Not eligible
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        Need {100 - customer.loyaltyPoints} more points
+                      </Typography>
+                    </Box>
+                  )}
                 </TableCell>
                 <TableCell>
                   <Typography variant="body2" fontWeight={600}>

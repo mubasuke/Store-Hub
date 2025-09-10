@@ -14,7 +14,15 @@ const getCustomers = async (req, res) => {
     const customers = await Customer.find({ storeId: req.user.storeId })
       .sort({ createdAt: -1 });
     
-    res.json({ customers });
+    // Add discount eligibility information to each customer
+    const customersWithEligibility = customers.map(customer => {
+      const customerObj = customer.toObject();
+      customerObj.discountEligibility = customer.getDiscountEligibility();
+      customerObj.pointsToNextTier = customer.getPointsToNextTier();
+      return customerObj;
+    });
+    
+    res.json({ customers: customersWithEligibility });
   } catch (error) {
     console.error('Error fetching customers:', error);
     res.status(500).json({ message: 'Failed to fetch customers' });
@@ -33,7 +41,12 @@ const getCustomer = async (req, res) => {
       return res.status(404).json({ message: 'Customer not found' });
     }
     
-    res.json({ customer });
+    // Add discount eligibility information
+    const customerObj = customer.toObject();
+    customerObj.discountEligibility = customer.getDiscountEligibility();
+    customerObj.pointsToNextTier = customer.getPointsToNextTier();
+    
+    res.json({ customer: customerObj });
   } catch (error) {
     console.error('Error fetching customer:', error);
     res.status(500).json({ message: 'Failed to fetch customer' });
@@ -45,8 +58,19 @@ const createCustomer = async (req, res) => {
   try {
     const { name, email, phone, address } = req.body;
     
+    console.log('Creating customer with data:', { name, email, phone, address });
+    console.log('User info:', { userId: req.user.userId, role: req.user.role, storeId: req.user.storeId });
+    
+    // Validate required fields
+    if (!name || !email || !phone) {
+      return res.status(400).json({ 
+        message: 'Name, email, and phone are required fields' 
+      });
+    }
+    
     // Check if user has a storeId
     if (!req.user.storeId) {
+      console.log('No storeId found for user:', req.user.userId);
       return res.status(400).json({ 
         message: 'No store associated with this account. Please create a store first.' 
       });
@@ -66,7 +90,7 @@ const createCustomer = async (req, res) => {
       name,
       email,
       phone,
-      address,
+      address: address || '',
       storeId: req.user.storeId,
       createdBy: req.user.userId
     });
@@ -79,6 +103,21 @@ const createCustomer = async (req, res) => {
     });
   } catch (error) {
     console.error('Error creating customer:', error);
+    
+    // Handle specific MongoDB errors
+    if (error.code === 11000) {
+      return res.status(400).json({ 
+        message: 'Customer with this email already exists' 
+      });
+    }
+    
+    if (error.name === 'ValidationError') {
+      const errors = Object.values(error.errors).map(err => err.message);
+      return res.status(400).json({ 
+        message: 'Validation error: ' + errors.join(', ') 
+      });
+    }
+    
     res.status(500).json({ message: 'Failed to create customer' });
   }
 };
@@ -169,8 +208,13 @@ const getCustomerHistory = async (req, res) => {
     .populate('employeeId', 'name')
     .sort({ saleDate: -1 });
     
+    // Add discount eligibility information
+    const customerObj = customer.toObject();
+    customerObj.discountEligibility = customer.getDiscountEligibility();
+    customerObj.pointsToNextTier = customer.getPointsToNextTier();
+    
     res.json({ 
-      customer, 
+      customer: customerObj, 
       sales,
       totalPurchases: sales.length,
       totalSpent: customer.totalSpent,
@@ -258,7 +302,15 @@ const searchCustomers = async (req, res) => {
       ]
     }).sort({ createdAt: -1 });
     
-    res.json({ customers });
+    // Add discount eligibility information to each customer
+    const customersWithEligibility = customers.map(customer => {
+      const customerObj = customer.toObject();
+      customerObj.discountEligibility = customer.getDiscountEligibility();
+      customerObj.pointsToNextTier = customer.getPointsToNextTier();
+      return customerObj;
+    });
+    
+    res.json({ customers: customersWithEligibility });
   } catch (error) {
     console.error('Error searching customers:', error);
     res.status(500).json({ message: 'Failed to search customers' });
