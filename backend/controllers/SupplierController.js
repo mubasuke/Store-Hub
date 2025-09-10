@@ -72,7 +72,7 @@ const createSupplier = async (req, res) => {
       paymentTerms,
       notes,
       storeId: req.user.storeId,
-      createdBy: req.user.id
+      createdBy: req.user.userId
     });
     
     await supplier.save();

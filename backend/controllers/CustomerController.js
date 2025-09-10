@@ -68,7 +68,7 @@ const createCustomer = async (req, res) => {
       phone,
       address,
       storeId: req.user.storeId,
-      createdBy: req.user.id
+      createdBy: req.user.userId
     });
     
     await customer.save();
